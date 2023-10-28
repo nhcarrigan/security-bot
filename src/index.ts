@@ -1,17 +1,40 @@
+import { Client, Events } from "discord.js";
+
+import { IntentOptions } from "./config/IntentOptions";
+import { ExtendedClient } from "./interfaces/ExtendedClient";
+import { errorHandler } from "./utils/errorHandler";
+import { loadCommands } from "./utils/loadCommands";
 import { logHandler } from "./utils/logHandler";
+import { registerCommands } from "./utils/registerCommands";
+import { validateEnv } from "./utils/validateEnv";
 
-/**
- * The linter will expect JSDoc declarations for all exported functions.
- *
- * @param {string} name Variables should be typed, and full sentences are expected.
- * @returns {string} The return type should be specified.
- */
-const main = (name: string): string => {
-  const string = `Hello ${name}!`;
-  logHandler.log("info", string);
-  return string;
-};
+(async () => {
+  const bot = new Client({ intents: IntentOptions }) as ExtendedClient;
+  bot.env = validateEnv();
+  await loadCommands(bot);
 
-main("Naomi");
+  bot.on(Events.InteractionCreate, async (interaction) => {
+    try {
+      if (interaction.isChatInputCommand()) {
+        await interaction.deferReply();
+        const target = bot.commands.find(
+          (c) => c.data.name === interaction.commandName
+        );
+        target
+          ? await target.run(bot, interaction)
+          : await interaction.editReply({
+              content: `Command ${interaction.commandName} not found!`,
+            });
+      }
+    } catch (err) {
+      await errorHandler(bot, "interaction create", err);
+    }
+  });
 
-export default main;
+  bot.on(Events.ClientReady, async () => {
+    await registerCommands(bot);
+    logHandler.info("Client ready!");
+  });
+
+  await bot.login(bot.env.token);
+})();
