@@ -36,5 +36,17 @@ import { validateEnv } from "./utils/validateEnv";
     logHandler.info("Client ready!");
   });
 
+  bot.on(Events.GuildCreate, async (guild) => {
+    await bot.env.debugHook.send({
+      content: `Joined guild ${guild.name} (${guild.id}).`,
+    });
+  });
+
+  bot.on(Events.GuildDelete, async (guild) => {
+    await bot.env.debugHook.send({
+      content: `Left guild ${guild.name} (${guild.id}).`,
+    });
+  });
+
   await bot.login(bot.env.token);
 })();
