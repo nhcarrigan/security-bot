@@ -1,3 +1,16 @@
 {
-  "extends": "@nhcarrigan"
+  "extends": "@nhcarrigan",
+  "overrides": [
+    {
+      "files": "./src/commands/secure.ts",
+      "rules": {
+        "camelcase": [
+          "error",
+          {
+            "allow": ["dms_disabled_until", "invites_disabled_until"]
+          }
+        ]
+      }
+    }
+  ]
 }
