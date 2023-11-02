@@ -11,10 +11,34 @@ export const secure: Command = {
   data: new SlashCommandBuilder()
     .setName("secure")
     .setDescription("Pauses invites and DMs for the next 24 hours.")
-    .setDMPermission(false),
+    .setDMPermission(false)
+    .addBooleanOption((option) =>
+      option
+        .setName("invites")
+        .setDescription("Whether to pause invites or not.")
+        .setRequired(true)
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName("dms")
+        .setDescription("Whether to pause DMs or not.")
+        .setRequired(true)
+    )
+    .addIntegerOption((option) =>
+      option
+        .setName("duration")
+        .setDescription(
+          "Number of hours to pause dms/invites for. Defaults to 24 hours."
+        )
+        .setMinValue(1)
+        .setMaxValue(24)
+    ),
   run: async (bot, interaction) => {
     try {
       const { guild, member } = interaction;
+      const pauseInvites = interaction.options.getBoolean("invites", true);
+      const pauseDms = interaction.options.getBoolean("dms", true);
+      const duration = interaction.options.getInteger("duration") ?? 24;
 
       if (!guild || !member || !(member instanceof GuildMember)) {
         await interaction.editReply({
@@ -56,7 +80,7 @@ export const secure: Command = {
         return;
       }
 
-      const date = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+      const date = new Date(new Date().getTime() + duration * 60 * 60 * 1000);
 
       const req = await fetch(
         `https://discord.com/api/v10/guilds/${guild.id}/incident-actions`,
@@ -67,8 +91,8 @@ export const secure: Command = {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            dms_disabled_until: date,
-            invites_disabled_until: date,
+            dms_disabled_until: pauseDms ? date : null,
+            invites_disabled_until: pauseInvites ? date : null,
           }),
         }
       );
@@ -88,7 +112,11 @@ export const secure: Command = {
       }
 
       await interaction.editReply({
-        content: "Server is secure for the next 24 hours.",
+        content: `Security options have been updated.\nInvites are ${
+          pauseInvites ? `disabled for the next ${duration} hours` : "enabled"
+        }.\nDMs are ${
+          pauseDms ? `disabled for the next ${duration} hours` : "enabled"
+        }.`,
       });
     } catch (err) {
       await errorHandler(bot, "invites command", err);
