@@ -11,10 +11,24 @@ export const secure: Command = {
   data: new SlashCommandBuilder()
     .setName("secure")
     .setDescription("Pauses invites and DMs for the next 24 hours.")
-    .setDMPermission(false),
+    .setDMPermission(false)
+    .addBooleanOption((option) =>
+      option
+        .setName("invites")
+        .setDescription("Whether to pause invites or not.")
+        .setRequired(true)
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName("dms")
+        .setDescription("Whether to pause DMs or not.")
+        .setRequired(true)
+    ),
   run: async (bot, interaction) => {
     try {
       const { guild, member } = interaction;
+      const pauseInvites = interaction.options.getBoolean("invites", true);
+      const pauseDms = interaction.options.getBoolean("dms", true);
 
       if (!guild || !member || !(member instanceof GuildMember)) {
         await interaction.editReply({
@@ -67,8 +81,8 @@ export const secure: Command = {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            dms_disabled_until: date,
-            invites_disabled_until: date,
+            dms_disabled_until: pauseDms ? date : null,
+            invites_disabled_until: pauseInvites ? date : null,
           }),
         }
       );
@@ -88,7 +102,9 @@ export const secure: Command = {
       }
 
       await interaction.editReply({
-        content: "Server is secure for the next 24 hours.",
+        content: `Security options have been updated.\nInvites are ${
+          pauseInvites ? "disabled for the next 24 hours" : "enabled"
+        }.\nDMs are ${pauseDms ? "disabled for the next 24 hours" : "enabled"}`,
       });
     } catch (err) {
       await errorHandler(bot, "invites command", err);
