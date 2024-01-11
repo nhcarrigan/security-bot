@@ -39,12 +39,20 @@ import { validateEnv } from "./utils/validateEnv";
   bot.on(Events.GuildCreate, async (guild) => {
     await bot.env.debugHook.send({
       content: `Joined guild ${guild.name} (${guild.id}).`,
+      username: bot.user?.username ?? "Security Bot",
+      avatarURL:
+        bot.user?.displayAvatarURL() ??
+        "https://cdn.nhcarrigan.com/avatars/nhcarrigan.png",
     });
   });
 
   bot.on(Events.GuildDelete, async (guild) => {
     await bot.env.debugHook.send({
       content: `Left guild ${guild.name} (${guild.id}).`,
+      username: bot.user?.username ?? "Security Bot",
+      avatarURL:
+        bot.user?.displayAvatarURL() ??
+        "https://cdn.nhcarrigan.com/avatars/nhcarrigan.png",
     });
   });
 
