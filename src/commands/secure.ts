@@ -107,6 +107,10 @@ export const secure: Command = {
           content: `Failed to update security actions for ${
             guild.id
           }:\n\`\`\`${JSON.stringify(res, null, 2)}`,
+          username: bot.user?.username ?? "Security Bot",
+          avatarURL:
+            bot.user?.displayAvatarURL() ??
+            "https://cdn.nhcarrigan.com/avatars/nhcarrigan.png",
         });
         return;
       }
